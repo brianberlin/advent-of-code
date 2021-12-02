@@ -1,14 +1,23 @@
-%{"down" => down, "up" => up, "forward" => forward} =
 File.cwd!()
 |> Path.join("2021/02/input.txt")
 |> File.read!()
 |> String.split("\n", trim: true)
 |> Enum.map(&String.split(&1, " "))
-|> Enum.map(fn [direction, amount] -> [direction, String.to_integer(amount)] end)
-|> Enum.group_by(&Enum.at(&1, 0), &Enum.at(&1, 1))
-|> Enum.map(&{elem(&1, 0), Enum.sum(elem(&1, 1))})
-|> Enum.into(%{})
+|> Enum.map(fn [direction, amount] -> [String.to_atom(direction), String.to_integer(amount)] end)
+|> Enum.reduce(%{depth: 0, aim: 0, horizontal: 0}, fn
+  [:forward, value], acc ->
+    acc
+    |> Map.put(:horizontal, acc.horizontal + value)
+    |> Map.put(:depth, acc.depth + (acc.aim * value))
 
-depth = down - up
-IO.inspect(depth)
-IO.inspect(depth * forward)
+  [:down, value], acc ->
+    Map.put(acc, :aim, acc.aim + value)
+
+  [:up, value], acc ->
+    Map.put(acc, :aim, acc.aim - value)
+
+end)
+|> Map.take([:depth, :horizontal])
+|> Map.values
+|> Enum.product()
+|> IO.inspect()
