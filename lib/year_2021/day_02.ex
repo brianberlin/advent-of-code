@@ -4,14 +4,27 @@ defmodule AdventOfCode.Year2021.Day02 do
   @doc ~S"""
   Solves Advent of Code 2021 Day 2 Part 1/2
 
-  ## Example
+  ## Tests
 
-      iex>{answer_1, answer_2} = Year2021.Day02.run(input(2021, 1))
-      is_integer(answer_1) and is_integer(answer_2)
+      iex>input = input(2021, 2)
+      iex>assert {answer_1, answer_2} = Year2021.Day02.run(input)
+      iex>assert is_integer(answer_1)
+      iex>assert is_integer(answer_2)
+
   """
   @impl true
   def run(input) do
-    answer_1 = :implement
+    %{"down" => down, "up" => up, "forward" => forward} =
+      input
+      |> Enum.map(&String.split(&1, " "))
+      |> Enum.map(fn [direction, amount] -> [direction, String.to_integer(amount)] end)
+      |> Enum.group_by(&Enum.at(&1, 0), &Enum.at(&1, 1))
+      |> Enum.map(&{elem(&1, 0), Enum.sum(elem(&1, 1))})
+      |> Enum.into(%{})
+
+    depth = down - up
+
+    answer_1 = depth * forward
 
     answer_2 =
       input
@@ -20,7 +33,7 @@ defmodule AdventOfCode.Year2021.Day02 do
       |> Enum.map(fn [direction, amount] ->
         [String.to_atom(direction), String.to_integer(amount)]
       end)
-      |> Enum.scan(%{depth: 0, aim: 0, horizontal: 0}, fn
+      |> Enum.reduce(%{depth: 0, aim: 0, horizontal: 0}, fn
         [:forward, value], acc ->
           acc
           |> Map.put(:horizontal, acc.horizontal + value)
