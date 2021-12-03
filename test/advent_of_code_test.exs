@@ -5,6 +5,7 @@ defmodule AdventOfCodeTest do
 
   doctest Year2021.Day01
   doctest Year2021.Day02
+  doctest Year2021.Day03
 
   defp input(year, day) do
     {year, day}
