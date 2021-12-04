@@ -29,7 +29,12 @@ defmodule AdventOfCode.Year2021.Day03 do
   end
 
   defp most_common(bits) do
-    round(Enum.sum(bits) / length(bits))
+    case Enum.sum(bits) / length(bits) do
+      0.5 ->
+        1
+      value ->
+        round(value)
+    end
   end
 
   defp least_common(bits) do
