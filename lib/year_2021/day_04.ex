@@ -19,46 +19,67 @@ defmodule AdventOfCode.Year2021.Day04 do
       |> String.split(",", trim: true)
       |> Enum.map(&String.to_integer/1)
 
-    boards =
+    players =
       boards
       |> Enum.map(&String.split(&1, " ", trim: true))
       |> List.flatten()
       |> Enum.map(&String.to_integer/1)
+      |> Enum.chunk_every(5)
+      |> Enum.chunk_every(5)
+      |> Enum.map(fn board -> {board, false, 0, 0} end)
+      |> play(numbers_to_draw)
 
-    answer_1 = play(numbers_to_draw, boards)
+    {_board, _won, _plays, score_1} = first_winner(players)
+    {_board, _won, _plays, score_2} = last_winner(players)
 
-    {answer_1, 0}
+    {score_1, score_2}
   end
 
-  defp play([current_number | numbers_to_draw], boards) do
-    boards = mark_boards(boards, current_number)
-    winner_index = check_for_winners(boards)
-
-    if is_nil(winner_index) do
-      play(numbers_to_draw, boards)
-    else
-      calculate_score(boards, winner_index, current_number)
-    end
+  defp first_winner(players) do
+    players
+    |> Enum.sort_by(fn {_, _, plays, _} -> plays end)
+    |> Enum.find(fn {_, winner, _, _} -> winner end)
   end
 
-  defp play([], boards), do: boards
-
-  defp mark_boards(boards, current_number) do
-    Enum.map(boards, fn
-      ^current_number ->
-        nil
-
-      number ->
-        number
-    end)
+  defp last_winner(players) do
+    players
+    |> Enum.sort_by(fn {_, _, plays, _} -> plays end, :desc)
+    |> Enum.find(fn {_, winner, _, _} -> winner end)
   end
 
-  defp check_for_winners(boards) do
-    boards
-    |> split_boards()
-    |> Enum.find_index(fn board ->
-      check_rows_for_winner(board) or board |> rotate() |> check_rows_for_winner()
-    end)
+  defp play(players, [current_number | numbers_to_draw]) do
+    players
+    |> Enum.map(&update_player(&1, current_number))
+    |> play(numbers_to_draw)
+  end
+
+  defp play(boards, []), do: boards
+
+  defp update_player({board, false, plays, _score}, current_number) do
+    board =
+      board
+      |> List.flatten()
+      |> Enum.map(fn
+        ^current_number ->
+          nil
+
+        number ->
+          number
+      end)
+      |> Enum.chunk_every(5)
+
+    score = calculate_score(board, current_number)
+    winner = winner?(board)
+
+    {board, winner, plays + 1, score}
+  end
+
+  defp update_player(board, _current_number) do
+    board
+  end
+
+  defp winner?(board) do
+    check_rows_for_winner(board) or board |> rotate() |> check_rows_for_winner()
   end
 
   defp check_rows_for_winner(rows) do
@@ -74,19 +95,11 @@ defmodule AdventOfCode.Year2021.Day04 do
     [Enum.map(m, &hd/1) | rotate(Enum.map(m, &tl/1))]
   end
 
-  defp calculate_score(boards, index, current_number) do
-    boards
-    |> split_boards()
-    |> Enum.at(index)
+  defp calculate_score(board, current_number) do
+    board
     |> List.flatten()
     |> Enum.filter(&!is_nil(&1))
     |> Enum.sum()
     |> Kernel.*(current_number)
-  end
-
-  defp split_boards(boards) do
-    boards
-    |> Enum.chunk_every(5)
-    |> Enum.chunk_every(5)
   end
 end
